@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/docker/libnetwork"
 	"github.com/docker/libnetwork/netlabel"
 	"github.com/docker/libnetwork/netutils"
@@ -243,6 +245,7 @@ func (sc *sandboxCreate) parseOptions() []libnetwork.SandboxOption {
 	}
 	if sc.DNS != nil {
 		for _, d := range sc.DNS {
+			log.Infof("DNS Server: %+v", d)
 			setFctList = append(setFctList, libnetwork.OptionDNS(d))
 		}
 	}
@@ -357,6 +360,8 @@ func procCreateSandbox(c libnetwork.NetworkController, vars map[string]string, b
 	if err != nil {
 		return "", &responseStatus{Status: "Invalid body: " + err.Error(), StatusCode: http.StatusBadRequest}
 	}
+
+	log.Infof("in procCreateSandbox: %+v", create)
 
 	sb, err := c.NewSandbox(create.ContainerID, create.parseOptions()...)
 	if err != nil {
