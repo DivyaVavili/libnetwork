@@ -38,6 +38,7 @@ type Allocator struct {
 
 // NewAllocator returns an instance of libnetwork ipam
 func NewAllocator(lcDs, glDs datastore.DataStore) (*Allocator, error) {
+	log.Errorf("Divya: in NewAllocator")
 	a := &Allocator{}
 
 	// Load predefined subnet pools
@@ -164,6 +165,7 @@ func (a *Allocator) initializeAddressSpace(as string, ds datastore.DataStore) er
 
 // DiscoverNew informs the allocator about a new global scope datastore
 func (a *Allocator) DiscoverNew(dType discoverapi.DiscoveryType, data interface{}) error {
+	log.Errorf("Divya: in allocator DiscoverNew")
 	if dType != discoverapi.DatastoreConfig {
 		return nil
 	}
@@ -188,12 +190,14 @@ func (a *Allocator) DiscoverDelete(dType discoverapi.DiscoveryType, data interfa
 
 // GetDefaultAddressSpaces returns the local and global default address spaces
 func (a *Allocator) GetDefaultAddressSpaces() (string, string, error) {
+	log.Errorf("Divya: in allocator GetDefaultAddressSpaces")
 	return localAddressSpace, globalAddressSpace, nil
 }
 
 // RequestPool returns an address pool along with its unique id.
 func (a *Allocator) RequestPool(addressSpace, pool, subPool string, options map[string]string, v6 bool) (string, *net.IPNet, map[string]string, error) {
 	log.Debugf("RequestPool(%s, %s, %s, %v, %t)", addressSpace, pool, subPool, options, v6)
+	log.Errorf("Divya: in allocator RequestPool")
 retry:
 	k, nw, ipr, pdf, err := a.parsePoolRequest(addressSpace, pool, subPool, v6)
 	if err != nil {
@@ -232,6 +236,7 @@ retry:
 // ReleasePool releases the address pool identified by the passed id
 func (a *Allocator) ReleasePool(poolID string) error {
 	log.Debugf("ReleasePool(%s)", poolID)
+	log.Errorf("Divya: in allocator ReleasePool")
 	k := SubnetKey{}
 	if err := k.FromString(poolID); err != nil {
 		return types.BadRequestErrorf("invalid pool id: %s", poolID)
@@ -417,7 +422,8 @@ func (a *Allocator) getPredefinedPool(as string, ipV6 bool) (*net.IPNet, error) 
 
 // RequestAddress returns an address from the specified pool ID
 func (a *Allocator) RequestAddress(poolID string, prefAddress net.IP, opts map[string]string) (*net.IPNet, map[string]string, error) {
-	log.Debugf("RequestAddress(%s, %v, %v)", poolID, prefAddress, opts)
+	log.Errorf("Divya: in Allocator RequestAddress")
+	log.Debugf("Divya: RequestAddress(%s, %v, %v)", poolID, prefAddress, opts)
 	k := SubnetKey{}
 	if err := k.FromString(poolID); err != nil {
 		return nil, nil, types.BadRequestErrorf("invalid pool id: %s", poolID)
@@ -467,6 +473,7 @@ func (a *Allocator) RequestAddress(poolID string, prefAddress net.IP, opts map[s
 // ReleaseAddress releases the address from the specified pool ID
 func (a *Allocator) ReleaseAddress(poolID string, address net.IP) error {
 	log.Debugf("ReleaseAddress(%s, %v)", poolID, address)
+	log.Errorf("Divya: in allocator ReleaseAddress")
 	k := SubnetKey{}
 	if err := k.FromString(poolID); err != nil {
 		return types.BadRequestErrorf("invalid pool id: %s", poolID)

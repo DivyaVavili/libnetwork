@@ -47,6 +47,8 @@ func (sb *sandbox) startResolver() {
 }
 
 func (sb *sandbox) setupResolutionFiles() error {
+	log.Errorf("Divya: in setupResolutionFiles")
+
 	if err := sb.buildHostsFile(); err != nil {
 		return err
 	}
@@ -137,6 +139,7 @@ func (sb *sandbox) updateParentHosts() error {
 }
 
 func (sb *sandbox) setupDNS() error {
+	log.Errorf("Divya: in setupDNS")
 	var newRC *resolvconf.File
 
 	if sb.config.resolvConfPath == "" {

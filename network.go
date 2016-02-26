@@ -691,6 +691,7 @@ func (n *network) addEndpoint(ep *endpoint) error {
 }
 
 func (n *network) CreateEndpoint(name string, options ...EndpointOption) (Endpoint, error) {
+	log.Errorf("Divya: in network CreateEndpoint")
 	var err error
 	if !config.IsValidName(name) {
 		return nil, ErrInvalidName(name)
@@ -952,6 +953,7 @@ func (n *network) getController() *controller {
 }
 
 func (n *network) ipamAllocate() error {
+	log.Errorf("Divya: in ipamAllocate")
 	// For now also exclude bridge from using new ipam
 	if n.Type() == "host" || n.Type() == "null" {
 		return nil
@@ -983,6 +985,7 @@ func (n *network) ipamAllocate() error {
 }
 
 func (n *network) ipamAllocateVersion(ipVer int, ipam ipamapi.Ipam) error {
+	log.Errorf("Divya: in ipamAllocateVersion")
 	var (
 		cfgList  *[]*IpamConf
 		infoList *[]*IpamInfo
@@ -1073,6 +1076,7 @@ func (n *network) ipamAllocateVersion(ipVer int, ipam ipamapi.Ipam) error {
 }
 
 func (n *network) ipamRelease() {
+	log.Errorf("Divya: in ipamRelease")
 	// For now exclude host and null
 	if n.Type() == "host" || n.Type() == "null" {
 		return
@@ -1087,6 +1091,7 @@ func (n *network) ipamRelease() {
 }
 
 func (n *network) ipamReleaseVersion(ipVer int, ipam ipamapi.Ipam) {
+	log.Errorf("Divya: in ipamReleaseVersion")
 	var infoList []*IpamInfo
 
 	switch ipVer {

@@ -51,11 +51,13 @@ type Sandbox interface {
 type SandboxOption func(sb *sandbox)
 
 func (sb *sandbox) processOptions(options ...SandboxOption) {
+	log.Errorf("Divya: in sandbox processOptions. sb: %+v", sb)
 	for _, opt := range options {
 		if opt != nil {
 			opt(sb)
 		}
 	}
+	log.Errorf("Divya: in sandbox After processOptions: sb: %+v", sb)
 }
 
 type epHeap []*endpoint

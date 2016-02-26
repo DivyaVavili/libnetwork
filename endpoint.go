@@ -347,6 +347,7 @@ func (ep *endpoint) getNetworkFromStore() (*network, error) {
 }
 
 func (ep *endpoint) Join(sbox Sandbox, options ...EndpointOption) error {
+	log.Errorf("Divya: in endpoint Join")
 	if sbox == nil {
 		return types.BadRequestErrorf("endpoint cannot be joined by nil container")
 	}
@@ -363,21 +364,25 @@ func (ep *endpoint) Join(sbox Sandbox, options ...EndpointOption) error {
 }
 
 func (ep *endpoint) sbJoin(sbox Sandbox, options ...EndpointOption) error {
+	log.Errorf("Divya: in endpoint sbJoin")
 	var err error
 	sb, ok := sbox.(*sandbox)
 	if !ok {
 		return types.BadRequestErrorf("not a valid Sandbox interface")
 	}
+	log.Errorf("Divya: in endpoint sbJoin. sb: %+v", sb)
 
 	network, err := ep.getNetworkFromStore()
 	if err != nil {
 		return fmt.Errorf("failed to get network from store during join: %v", err)
 	}
 
+	log.Errorf("Divya: in endpoint sbJoin. network: %+v", network)
 	ep, err = network.getEndpointFromStore(ep.ID())
 	if err != nil {
 		return fmt.Errorf("failed to get endpoint from store during join: %v", err)
 	}
+	log.Errorf("Divya: in endpoint sbJoin. ep: %+v", ep)
 
 	ep.Lock()
 	if ep.sandboxID != "" {
@@ -835,6 +840,7 @@ func (ep *endpoint) DataScope() string {
 }
 
 func (ep *endpoint) assignAddress(ipam ipamapi.Ipam, assignIPv4, assignIPv6 bool) error {
+	log.Errorf("Divya: in endpoint assignAddress")
 	var err error
 
 	n := ep.getNetwork()
@@ -842,7 +848,7 @@ func (ep *endpoint) assignAddress(ipam ipamapi.Ipam, assignIPv4, assignIPv6 bool
 		return nil
 	}
 
-	log.Debugf("Assigning addresses for endpoint %s's interface on network %s", ep.Name(), n.Name())
+	log.Debugf("Divya: Assigning addresses for endpoint %s's interface on network %s", ep.Name(), n.Name())
 
 	if assignIPv4 {
 		if err = ep.assignAddressVersion(4, ipam); err != nil {
@@ -858,6 +864,7 @@ func (ep *endpoint) assignAddress(ipam ipamapi.Ipam, assignIPv4, assignIPv6 bool
 }
 
 func (ep *endpoint) assignAddressVersion(ipVer int, ipam ipamapi.Ipam) error {
+	log.Errorf("Divya: in endpoint assignAddressVersion")
 	var (
 		poolID  *string
 		address **net.IPNet
@@ -879,6 +886,7 @@ func (ep *endpoint) assignAddressVersion(ipVer int, ipam ipamapi.Ipam) error {
 		return types.InternalErrorf("incorrect ip version number passed: %d", ipVer)
 	}
 
+	log.Errorf("Divya: in endpoint assignAddressVersion. Network: %+v", n)
 	ipInfo := n.getIPInfo(ipVer)
 
 	// ipv6 address is not mandatory
@@ -917,6 +925,7 @@ func (ep *endpoint) assignAddressVersion(ipVer int, ipam ipamapi.Ipam) error {
 }
 
 func (ep *endpoint) releaseAddress() {
+	log.Errorf("Divya: in endpoint releaseAddress")
 	n := ep.getNetwork()
 	if n.Type() == "host" || n.Type() == "null" {
 		return

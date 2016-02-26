@@ -434,6 +434,8 @@ func (c *controller) RegisterIpamDriverWithCapabilities(name string, driver ipam
 // NewNetwork creates a new network of the specified network type. The options
 // are network specific and modeled in a generic way.
 func (c *controller) NewNetwork(networkType, name string, options ...NetworkOption) (Network, error) {
+	log.Errorf("Divya: in NewNetwork")
+
 	if !config.IsValidName(name) {
 		return nil, ErrInvalidName(name)
 	}
@@ -573,6 +575,7 @@ func (c *controller) NetworkByID(id string) (Network, error) {
 
 // NewSandbox creates a new sandbox for the passed container id
 func (c *controller) NewSandbox(containerID string, options ...SandboxOption) (Sandbox, error) {
+	log.Errorf("Divya: in NewSandbox")
 	var err error
 
 	if containerID == "" {
@@ -655,6 +658,7 @@ func (c *controller) NewSandbox(containerID string, options ...SandboxOption) (S
 		return nil, fmt.Errorf("updating the store state of sandbox failed: %v", err)
 	}
 
+	log.Errorf("Divya: in NewSandbox. sb: %+v", sb)
 	return sb, nil
 }
 

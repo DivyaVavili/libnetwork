@@ -69,6 +69,7 @@ func (a *allocator) getCapabilities() (*ipamapi.Capability, error) {
 
 // GetDefaultAddressSpaces returns the local and global default address spaces
 func (a *allocator) GetDefaultAddressSpaces() (string, string, error) {
+	log.Errorf("Divya: in allocator GetDefaultAddressSpaces")
 	res := &api.GetAddressSpacesResponse{}
 	if err := a.call("GetDefaultAddressSpaces", nil, res); err != nil {
 		return "", "", err
@@ -78,6 +79,7 @@ func (a *allocator) GetDefaultAddressSpaces() (string, string, error) {
 
 // RequestPool requests an address pool in the specified address space
 func (a *allocator) RequestPool(addressSpace, pool, subPool string, options map[string]string, v6 bool) (string, *net.IPNet, map[string]string, error) {
+	log.Errorf("Divya: in allocator RequestPool")
 	req := &api.RequestPoolRequest{AddressSpace: addressSpace, Pool: pool, SubPool: subPool, Options: options, V6: v6}
 	res := &api.RequestPoolResponse{}
 	if err := a.call("RequestPool", req, res); err != nil {
@@ -89,6 +91,7 @@ func (a *allocator) RequestPool(addressSpace, pool, subPool string, options map[
 
 // ReleasePool removes an address pool from the specified address space
 func (a *allocator) ReleasePool(poolID string) error {
+	log.Errorf("Divya: in allocator ReleasePool")
 	req := &api.ReleasePoolRequest{PoolID: poolID}
 	res := &api.ReleasePoolResponse{}
 	return a.call("ReleasePool", req, res)
@@ -96,6 +99,7 @@ func (a *allocator) ReleasePool(poolID string) error {
 
 // RequestAddress requests an address from the address pool
 func (a *allocator) RequestAddress(poolID string, address net.IP, options map[string]string) (*net.IPNet, map[string]string, error) {
+	log.Errorf("Divya: in allocator RequestAddress")
 	var (
 		prefAddress string
 		retAddress  *net.IPNet
@@ -110,6 +114,7 @@ func (a *allocator) RequestAddress(poolID string, address net.IP, options map[st
 		return nil, nil, err
 	}
 	if res.Address != "" {
+		log.Errorf("Divya: in allocator RequestAddress api.RequestAddressResponse: %+v", res)
 		retAddress, err = types.ParseCIDR(res.Address)
 	}
 	return retAddress, res.Data, err
@@ -117,6 +122,7 @@ func (a *allocator) RequestAddress(poolID string, address net.IP, options map[st
 
 // ReleaseAddress releases the address from the specified address pool
 func (a *allocator) ReleaseAddress(poolID string, address net.IP) error {
+	log.Errorf("Divya: in allocator ReleaseAddress")
 	var relAddress string
 	if address != nil {
 		relAddress = address.String()
@@ -128,10 +134,12 @@ func (a *allocator) ReleaseAddress(poolID string, address net.IP) error {
 
 // DiscoverNew is a notification for a new discovery event, such as a new global datastore
 func (a *allocator) DiscoverNew(dType discoverapi.DiscoveryType, data interface{}) error {
+	log.Errorf("Divya: in allocator DiscoverNew")
 	return nil
 }
 
 // DiscoverDelete is a notification for a discovery delete event, such as a node leaving a cluster
 func (a *allocator) DiscoverDelete(dType discoverapi.DiscoveryType, data interface{}) error {
+	log.Errorf("Divya: in allocator DiscoverDelete")
 	return nil
 }

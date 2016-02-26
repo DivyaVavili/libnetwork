@@ -224,6 +224,7 @@ func buildSandboxResource(sb libnetwork.Sandbox) *sandboxResource {
 *****************/
 
 func (sc *sandboxCreate) parseOptions() []libnetwork.SandboxOption {
+	log.Errorf("Divya: in parseOptions")
 	var setFctList []libnetwork.SandboxOption
 	if sc.HostName != "" {
 		setFctList = append(setFctList, libnetwork.OptionHostname(sc.HostName))
@@ -245,7 +246,7 @@ func (sc *sandboxCreate) parseOptions() []libnetwork.SandboxOption {
 	}
 	if sc.DNS != nil {
 		for _, d := range sc.DNS {
-			log.Infof("DNS Server: %+v", d)
+			log.Errorf("Divya: DNS Server: %+v", d)
 			setFctList = append(setFctList, libnetwork.OptionDNS(d))
 		}
 	}
@@ -267,6 +268,7 @@ func (ej *endpointJoin) parseOptions() []libnetwork.EndpointOption {
 *******************/
 
 func processCreateDefaults(c libnetwork.NetworkController, nc *networkCreate) {
+	log.Errorf("Divya: in processCreateDefaults")
 	if nc.NetworkType == "" {
 		nc.NetworkType = c.Config().Daemon.DefaultDriver
 	}
@@ -278,6 +280,7 @@ func processCreateDefaults(c libnetwork.NetworkController, nc *networkCreate) {
 func procCreateNetwork(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
 	var create networkCreate
 
+	log.Errorf("Divya: in procCreateNetwork")
 	err := json.Unmarshal(body, &create)
 	if err != nil {
 		return nil, &responseStatus{Status: "Invalid body: " + err.Error(), StatusCode: http.StatusBadRequest}
@@ -313,6 +316,7 @@ func procCreateNetwork(c libnetwork.NetworkController, vars map[string]string, b
 }
 
 func procGetNetwork(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procGetNetwork")
 	t, by := detectNetworkTarget(vars)
 	nw, errRsp := findNetwork(c, t, by)
 	if !errRsp.isOK() {
@@ -322,6 +326,7 @@ func procGetNetwork(c libnetwork.NetworkController, vars map[string]string, body
 }
 
 func procGetNetworks(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procGetNetworks")
 	var list []*networkResource
 
 	// Look for query filters and validate
@@ -354,14 +359,13 @@ func procGetNetworks(c libnetwork.NetworkController, vars map[string]string, bod
 }
 
 func procCreateSandbox(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procCreateSandbox")
 	var create sandboxCreate
 
 	err := json.Unmarshal(body, &create)
 	if err != nil {
 		return "", &responseStatus{Status: "Invalid body: " + err.Error(), StatusCode: http.StatusBadRequest}
 	}
-
-	log.Infof("in procCreateSandbox: %+v", create)
 
 	sb, err := c.NewSandbox(create.ContainerID, create.parseOptions()...)
 	if err != nil {
@@ -375,6 +379,7 @@ func procCreateSandbox(c libnetwork.NetworkController, vars map[string]string, b
  Network interface
 *******************/
 func procCreateEndpoint(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procCreateEndpoint")
 	var ec endpointCreate
 
 	err := json.Unmarshal(body, &ec)
@@ -409,6 +414,7 @@ func procCreateEndpoint(c libnetwork.NetworkController, vars map[string]string, 
 }
 
 func procGetEndpoint(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procGetEndpoint")
 	nwT, nwBy := detectNetworkTarget(vars)
 	epT, epBy := detectEndpointTarget(vars)
 
@@ -421,6 +427,7 @@ func procGetEndpoint(c libnetwork.NetworkController, vars map[string]string, bod
 }
 
 func procGetEndpoints(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procGetEndpoints")
 	// Look for query filters and validate
 	name, queryByName := vars[urlEpName]
 	shortID, queryByPid := vars[urlEpPID]
@@ -461,6 +468,7 @@ func procGetEndpoints(c libnetwork.NetworkController, vars map[string]string, bo
 }
 
 func procDeleteNetwork(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procDeleteNetwork")
 	target, by := detectNetworkTarget(vars)
 
 	nw, errRsp := findNetwork(c, target, by)
@@ -480,6 +488,7 @@ func procDeleteNetwork(c libnetwork.NetworkController, vars map[string]string, b
  Endpoint interface
 *******************/
 func procJoinEndpoint(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procJoinEndpoint")
 	var ej endpointJoin
 	var setFctList []libnetwork.EndpointOption
 	err := json.Unmarshal(body, &ej)
@@ -516,6 +525,7 @@ func procJoinEndpoint(c libnetwork.NetworkController, vars map[string]string, bo
 }
 
 func procLeaveEndpoint(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procLeaveEndpoint")
 	nwT, nwBy := detectNetworkTarget(vars)
 	epT, epBy := detectEndpointTarget(vars)
 
@@ -538,6 +548,7 @@ func procLeaveEndpoint(c libnetwork.NetworkController, vars map[string]string, b
 }
 
 func procDeleteEndpoint(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procDeleteEndpoint")
 	nwT, nwBy := detectNetworkTarget(vars)
 	epT, epBy := detectEndpointTarget(vars)
 
@@ -558,6 +569,7 @@ func procDeleteEndpoint(c libnetwork.NetworkController, vars map[string]string, 
  Service interface
 *******************/
 func procGetServices(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procGetServices")
 	// Look for query filters and validate
 	nwName, filterByNwName := vars[urlNwName]
 	svName, queryBySvName := vars[urlEpName]
@@ -616,6 +628,7 @@ func procGetServices(c libnetwork.NetworkController, vars map[string]string, bod
 }
 
 func procGetService(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procGetService")
 	epT, epBy := detectEndpointTarget(vars)
 	sv, errRsp := findService(c, epT, epBy)
 	if !errRsp.isOK() {
@@ -625,6 +638,7 @@ func procGetService(c libnetwork.NetworkController, vars map[string]string, body
 }
 
 func procPublishService(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procPublishService")
 	var sp servicePublish
 
 	err := json.Unmarshal(body, &sp)
@@ -658,6 +672,7 @@ func procPublishService(c libnetwork.NetworkController, vars map[string]string, 
 }
 
 func procUnpublishService(c libnetwork.NetworkController, vars map[string]string, body []byte) (interface{}, *responseStatus) {
+	log.Errorf("Divya: in procUnpublishService")
 	var sd serviceDelete
 
 	if body != nil {
