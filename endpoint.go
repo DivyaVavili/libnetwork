@@ -382,7 +382,7 @@ func (ep *endpoint) sbJoin(sbox Sandbox, options ...EndpointOption) error {
 	if err != nil {
 		return fmt.Errorf("failed to get endpoint from store during join: %v", err)
 	}
-	log.Errorf("Divya: in endpoint sbJoin. ep: %+v", ep)
+	log.Errorf("Divya: in endpoint sbJoin. ep: %+v....... ep.iface: %+v", ep, ep.iface)
 
 	ep.Lock()
 	if ep.sandboxID != "" {
@@ -404,6 +404,14 @@ func (ep *endpoint) sbJoin(sbox Sandbox, options ...EndpointOption) error {
 			ep.Unlock()
 		}
 	}()
+
+	sb.config.dnsList = append(sb.config.dnsList, ep.iface.dnsServers...)
+	sb.config.dnsSearchList = append(sb.config.dnsSearchList, ep.iface.dnsSearchDomains...)
+	if err = sb.setupResolutionFiles(); err != nil {
+		log.Errorf("Divya: in endpoint sbJoin."+
+			"Error in setting up resolution files: err %+v", err)
+	}
+	log.Errorf("Divya: in endpoint sbJoin. Setup resolution files. sb: %+v", sb)
 
 	network.Lock()
 	nid := network.id
@@ -866,13 +874,17 @@ func (ep *endpoint) assignAddress(ipam ipamapi.Ipam, assignIPv4, assignIPv6 bool
 func (ep *endpoint) assignAddressVersion(ipVer int, ipam ipamapi.Ipam) error {
 	log.Errorf("Divya: in endpoint assignAddressVersion")
 	var (
-		poolID  *string
-		address **net.IPNet
-		prefAdd net.IP
-		progAdd net.IP
+		poolID           *string
+		address          **net.IPNet
+		dnsServers       *[]string
+		dnsSearchDomains *[]string
+		prefAdd          net.IP
+		progAdd          net.IP
 	)
 
 	n := ep.getNetwork()
+	dnsServers = &ep.iface.dnsServers
+	dnsSearchDomains = &ep.iface.dnsSearchDomains
 	switch ipVer {
 	case 4:
 		poolID = &ep.iface.v4PoolID
@@ -906,12 +918,15 @@ func (ep *endpoint) assignAddressVersion(ipVer int, ipam ipamapi.Ipam) error {
 		if progAdd != nil && !d.Pool.Contains(progAdd) {
 			continue
 		}
-		addr, _, err := ipam.RequestAddress(d.PoolID, progAdd, ep.ipamOptions)
+		addr, _, dnsServerList, dnsSearchList, err := ipam.RequestAddress(d.PoolID, progAdd, ep.ipamOptions)
 		if err == nil {
 			ep.Lock()
 			*address = addr
+			*dnsServers = dnsServerList
+			*dnsSearchDomains = dnsSearchList
 			*poolID = d.PoolID
 			ep.Unlock()
+			log.Errorf("Divya: in endpoint assignAddressVersion. dnsIP: %+v dnsSearch: %+v ep: %+v.... ep.iface: %+v", dnsServerList, dnsSearchDomains, ep, ep.iface)
 			return nil
 		}
 		if err != ipamapi.ErrNoAvailableIPs || progAdd != nil {

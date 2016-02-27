@@ -98,7 +98,7 @@ func (a *allocator) ReleasePool(poolID string) error {
 }
 
 // RequestAddress requests an address from the address pool
-func (a *allocator) RequestAddress(poolID string, address net.IP, options map[string]string) (*net.IPNet, map[string]string, error) {
+func (a *allocator) RequestAddress(poolID string, address net.IP, options map[string]string) (*net.IPNet, map[string]string, []string, []string, error) {
 	log.Errorf("Divya: in allocator RequestAddress")
 	var (
 		prefAddress string
@@ -111,13 +111,13 @@ func (a *allocator) RequestAddress(poolID string, address net.IP, options map[st
 	req := &api.RequestAddressRequest{PoolID: poolID, Address: prefAddress, Options: options}
 	res := &api.RequestAddressResponse{}
 	if err := a.call("RequestAddress", req, res); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	if res.Address != "" {
 		log.Errorf("Divya: in allocator RequestAddress api.RequestAddressResponse: %+v", res)
 		retAddress, err = types.ParseCIDR(res.Address)
 	}
-	return retAddress, res.Data, err
+	return retAddress, res.Data, res.DnsServers, res.DnsSearchDomains, err
 }
 
 // ReleaseAddress releases the address from the specified address pool

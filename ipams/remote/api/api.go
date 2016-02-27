@@ -66,18 +66,18 @@ type ReleasePoolResponse struct {
 
 // RequestAddressRequest represents the expected data in a ``request address`` request message
 type RequestAddressRequest struct {
-	PoolID           string
-	Address          string // in CIDR format
-	Options          map[string]string
+	PoolID  string
+	Address string // in CIDR format
+	Options map[string]string
 }
 
 // RequestAddressResponse represents the expected data in the response message to a ``request address`` request
 type RequestAddressResponse struct {
 	Response
-	Address string // in CIDR format
-	Data    map[string]string
-	DnsIP            string
-	DnsSearchDomains map[string]string
+	Address          string // in CIDR format
+	Data             map[string]string
+	DnsServers       []string
+	DnsSearchDomains []string
 }
 
 // ReleaseAddressRequest represents the expected data in a ``release address`` request message

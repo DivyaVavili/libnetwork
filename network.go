@@ -745,6 +745,7 @@ func (n *network) CreateEndpoint(name string, options ...EndpointOption) (Endpoi
 			ep.releaseAddress()
 		}
 	}()
+	log.Errorf("Divya: In CreateEndpoint. ep after IPv6: %+v", ep)
 
 	if err = n.addEndpoint(ep); err != nil {
 		return nil, err
@@ -761,6 +762,8 @@ func (n *network) CreateEndpoint(name string, options ...EndpointOption) (Endpoi
 		return nil, err
 	}
 
+	log.Errorf("Divya: In CreateEndpoint. ep after IPv6: %+v", ep)
+
 	if err = n.getController().updateToStore(ep); err != nil {
 		return nil, err
 	}
@@ -771,6 +774,11 @@ func (n *network) CreateEndpoint(name string, options ...EndpointOption) (Endpoi
 			}
 		}
 	}()
+	epVerify, err := n.getEndpointFromStore(ep.ID())
+	if err != nil {
+		log.Errorf("Divya: Error fetching endpoint from store")
+	}
+	log.Errorf("Divya: In CreateEndpoint. epVerify after storing: %+v", epVerify)
 
 	// Watch for service records
 	n.getController().watchSvcRecord(ep)
@@ -1047,7 +1055,7 @@ func (n *network) ipamAllocateVersion(ipVer int, ipam ipamapi.Ipam) error {
 			var gatewayOpts = map[string]string{
 				ipamapi.RequestAddressType: netlabel.Gateway,
 			}
-			if d.Gateway, _, err = ipam.RequestAddress(d.PoolID, net.ParseIP(cfg.Gateway), gatewayOpts); err != nil {
+			if d.Gateway, _, _, _, err = ipam.RequestAddress(d.PoolID, net.ParseIP(cfg.Gateway), gatewayOpts); err != nil {
 				return types.InternalErrorf("failed to allocate gateway (%v): %v", cfg.Gateway, err)
 			}
 		}
@@ -1065,7 +1073,7 @@ func (n *network) ipamAllocateVersion(ipVer int, ipam ipamapi.Ipam) error {
 					return types.ForbiddenErrorf("auxilairy address: (%s:%s) must belong to the master pool: %s", k, v, d.Pool)
 				}
 				// Attempt reservation in the container addressable pool, silent the error if address does not belong to that pool
-				if d.IPAMData.AuxAddresses[k], _, err = ipam.RequestAddress(d.PoolID, ip, nil); err != nil && err != ipamapi.ErrIPOutOfRange {
+				if d.IPAMData.AuxAddresses[k], _, _, _, err = ipam.RequestAddress(d.PoolID, ip, nil); err != nil && err != ipamapi.ErrIPOutOfRange {
 					return types.InternalErrorf("failed to allocate secondary ip address (%s:%s): %v", k, v, err)
 				}
 			}
