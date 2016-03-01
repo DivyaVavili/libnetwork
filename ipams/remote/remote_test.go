@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/docker/docker/pkg/plugins"
+	"github.com/docker/libkv/store"
+	"github.com/docker/libnetwork/datastore"
 	"github.com/docker/libnetwork/ipamapi"
 	_ "github.com/docker/libnetwork/testutils"
 )
@@ -139,8 +141,7 @@ func TestGetDefaultAddressSpaces(t *testing.T) {
 	}
 }
 
-func TestRemoteDriver(t *testing.T) {
-	var plugin = "test-ipam-driver"
+func getRemoteAllocator(plugin string, t *testing.T) (ipamapi.Ipam, error) {
 
 	mux := http.NewServeMux()
 	defer setupPlugin(t, plugin, mux)()
@@ -197,8 +198,12 @@ func TestRemoteDriver(t *testing.T) {
 			ip = "172.20.0.34"
 		}
 		ip = fmt.Sprintf("%s/16", ip)
+		dnsList := []string{"172.20.0.1", "172.20.0.2"}
+		dnsSearchList := []string{"domain1", "domain2"}
 		return map[string]interface{}{
-			"Address": ip,
+			"Address":          ip,
+			"DnsServers":       dnsList,
+			"DnsSearchDomains": dnsSearchList,
 		}
 	})
 
@@ -218,6 +223,12 @@ func TestRemoteDriver(t *testing.T) {
 	}
 
 	d := newAllocator(plugin, p.Client)
+
+	return d, nil
+}
+
+func TestRemoteDriver(t *testing.T) {
+	d, _ := getRemoteAllocator("test-ipam-driver", t)
 
 	l, g, err := d.(*allocator).GetDefaultAddressSpaces()
 	if err != nil {
@@ -267,16 +278,26 @@ func TestRemoteDriver(t *testing.T) {
 	}
 
 	// Request any address
-	addr, _, err := d.RequestAddress(poolID2, nil, nil)
+	addr, _, dnsList, dnsSearchDomains, err := d.RequestAddress(poolID2, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if addr == nil || addr.String() != "172.20.0.34/16" {
 		t.Fatalf("Unexpected address: %s", addr)
 	}
+	if dnsList == nil || len(dnsList) != 2 || dnsList[0] != "172.20.0.1" || dnsList[1] != "172.20.0.2" {
+		t.Fatalf("Unexpected DNS list: %+v", dnsList)
+	} else {
+		t.Logf("Expected DNS list: %+v", dnsList)
+	}
+	if dnsSearchDomains == nil || len(dnsSearchDomains) != 2 || dnsSearchDomains[0] != "domain1" || dnsSearchDomains[1] != "domain2" {
+		t.Fatalf("Unexpected DNS Search Domains List: %+v", dnsSearchDomains)
+	} else {
+		t.Logf("Expected DNS Search Domains List: %+v", dnsSearchDomains)
+	}
 
 	// Request specific address
-	addr2, _, err := d.RequestAddress(poolID2, net.ParseIP("172.20.1.45"), nil)
+	addr2, _, _, _, err := d.RequestAddress(poolID2, net.ParseIP("172.20.1.45"), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -288,5 +309,144 @@ func TestRemoteDriver(t *testing.T) {
 	err = d.ReleaseAddress(poolID, net.ParseIP("172.18.1.45"))
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+/*
+func randomLocalStore() (datastore.DataStore, error) {
+	tmp, err := ioutil.TempFile("", "libnetwork-ipamremote")
+	if err != nil {
+		return nil, fmt.Errorf("Error creating temp file: %v", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return nil, fmt.Errorf("Error closing temp file: %v", err)
+	}
+	return datastore.NewDataStore(datastore.LocalScope, &datastore.ScopeCfg{
+		Client: datastore.ScopeClientCfg{
+			Provider: "boltdb",
+			Address:  defaultPrefix + tmp.Name(),
+			Config: &store.Config{
+				Bucket:            "libnetwork",
+				ConnectionTimeout: 3 * time.Second,
+			},
+		},
+	})
+}
+*/
+func TestRetrieveFromStore(t *testing.T) {
+	plugin := "test-ipam-driver-retrieve"
+
+	num := 200
+	/*
+		ds, err := randomLocalStore()
+		if err != nil {
+			t.Fatal(err)
+		}
+	*/
+	rd, err := getRemoteAllocator(plugin, t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localAS, globalAS, err := rd.(*allocator).GetDefaultAddressSpaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if localAS != "white" || globalAS != "blue" {
+		t.Fatalf("Unexpected default local/global address spaces: %s, %s", localAS, globalAS)
+	}
+
+	pid, _, _, err := rd.RequestPool(localAS, "172.25.0.0/16", "", nil, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < num; i++ {
+		if _, _, _, _, err := rd.RequestAddress(pid, nil, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Restore
+	rd1, err := getRemoteAllocator(plugin, t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rd1.(*allocator).refresh(localAS)
+	db := rd.(*allocator).DumpDatabase()
+	db1 := rd1.(*allocator).DumpDatabase()
+	if db != db1 {
+		t.Fatalf("Unexpected db change.\nExpected:%s\nGot:%s", db, db1)
+	}
+	checkDBEquality(rd, rd1, localAS, t)
+	pid, _, _, err = rd1.RequestPool(localAS, "172.25.0.0/16", "172.25.1.0/24", nil, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < num/2; i++ {
+		if _, _, _, _, err := rd1.RequestAddress(pid, nil, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Restore
+	rd2, err := getRemoteAllocator(plugin, t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rd2.(*allocator).refresh(localAS)
+	checkDBEquality(rd1, rd2, localAS, t)
+	pid, _, _, err = rd2.RequestPool(localAS, "172.25.0.0/16", "172.25.2.0/24", nil, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < num/2; i++ {
+		if _, _, _, _, err := rd2.RequestAddress(pid, nil, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Restore
+	rd3, err := getRemoteAllocator(plugin, t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rd3.(*allocator).refresh(localAS)
+	checkDBEquality(rd2, rd3, localAS, t)
+	pid, _, _, err = rd3.RequestPool(localAS, "172.26.0.0/16", "", nil, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < num/2; i++ {
+		if _, _, _, _, err := rd3.RequestAddress(pid, nil, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Restore
+	rd4, err := getRemoteAllocator(plugin, t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rd4.(*allocator).refresh(localAS)
+	checkDBEquality(rd3, rd4, localAS, t)
+}
+
+func checkDBEquality(rd1, rd2 ipamapi.Ipam, localAS string, t *testing.T) {
+	for k, cnf1 := range rd1.(*allocator).addrSpaces[localAS].subnets {
+		cnf2 := rd2.(*allocator).addrSpaces[localAS].subnets[k]
+		if cnf1.String() != cnf2.String() {
+			t.Fatalf("%s\n%s", cnf1, cnf2)
+		}
+		if cnf1.(*allocator).Range == nil {
+			rd2.retrieveBitmask(k, cnf1.(*allocator).Pool)
+		}
+	}
+
+	for k, bm1 := range rd1.(*allocator).addresses {
+		bm2 := rd2.(*allocator).addresses[k]
+		if bm1.String() != bm2.String() {
+			t.Fatalf("%s\n%s", bm1, bm2)
+		}
 	}
 }
