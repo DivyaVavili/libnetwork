@@ -68,12 +68,12 @@ func (a *allocator) RequestAddress(poolID string, prefAddress net.IP, opts map[s
 	_, ipNet, err := net.ParseCIDR(poolID)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	if prefAddress == nil {
-		return ipNet, nil, nil
+		return ipNet, nil, nil, nil, nil
 	}
-	return &net.IPNet{IP: prefAddress, Mask: ipNet.Mask}, nil, nil
+	return &net.IPNet{IP: prefAddress, Mask: ipNet.Mask}, nil, nil, nil, nil
 }
 
 // ReleaseAddress releases the address - always succeeds
