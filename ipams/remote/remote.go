@@ -117,7 +117,7 @@ func (a *allocator) RequestAddress(poolID string, address net.IP, options map[st
 		log.Errorf("Divya: in allocator RequestAddress api.RequestAddressResponse: %+v", res)
 		retAddress, err = types.ParseCIDR(res.Address)
 	}
-	return retAddress, res.Data, res.DnsServers, res.DnsSearchDomains, err
+	return retAddress, res.Data, res.DNSServers, res.DNSSearchDomains, err
 }
 
 // ReleaseAddress releases the address from the specified address pool

@@ -76,8 +76,8 @@ type RequestAddressResponse struct {
 	Response
 	Address          string // in CIDR format
 	Data             map[string]string
-	DnsServers       []string
-	DnsSearchDomains []string
+	DNSServers       []string
+	DNSSearchDomains []string
 }
 
 // ReleaseAddressRequest represents the expected data in a ``release address`` request message

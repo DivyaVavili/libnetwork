@@ -202,8 +202,8 @@ func getRemoteAllocator(plugin string, t *testing.T) (ipamapi.Ipam, error) {
 		dnsSearchList := []string{"domain1", "domain2"}
 		return map[string]interface{}{
 			"Address":          ip,
-			"DnsServers":       dnsList,
-			"DnsSearchDomains": dnsSearchList,
+			"DNSServers":       dnsList,
+			"DNSSearchDomains": dnsSearchList,
 		}
 	})
 
