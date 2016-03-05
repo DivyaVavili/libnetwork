@@ -202,8 +202,8 @@ func getRemoteAllocator(plugin string, t *testing.T) (ipamapi.Ipam, error) {
 		dnsSearchList := []string{"domain1", "domain2"}
 		return map[string]interface{}{
 			"Address":          ip,
-			"DNSServers":       dnsList,
-			"DNSSearchDomains": dnsSearchList,
+			"DNSServers":       strings.Join(dnsList, " "),
+			"DNSSearchDomains": strings.Join(dnsSearchList, " "),
 		}
 	})
 
@@ -278,26 +278,43 @@ func TestRemoteDriver(t *testing.T) {
 	}
 
 	// Request any address
-	addr, _, dnsList, dnsSearchDomains, err := d.RequestAddress(poolID2, nil, nil)
+	addr, ipamData, err := d.RequestAddress(poolID2, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if addr == nil || addr.String() != "172.20.0.34/16" {
 		t.Fatalf("Unexpected address: %s", addr)
 	}
-	if dnsList == nil || len(dnsList) != 2 || dnsList[0] != "172.20.0.1" || dnsList[1] != "172.20.0.2" {
+
+	dnsList = strings.split(ipamData["DNSServers"], " ")
+	dnsSearchDomains = strings.split(ipamData["DNSSearchDomains"], " ")
+
+	expectedDNSList := []string{"172.20.0.1", "172.20.0.2"}
+	if dnsList == nil || len(dnsList) != len(expectedDNSList) {
 		t.Fatalf("Unexpected DNS list: %+v", dnsList)
 	} else {
 		t.Logf("Expected DNS list: %+v", dnsList)
 	}
-	if dnsSearchDomains == nil || len(dnsSearchDomains) != 2 || dnsSearchDomains[0] != "domain1" || dnsSearchDomains[1] != "domain2" {
-		t.Fatalf("Unexpected DNS Search Domains List: %+v", dnsSearchDomains)
+	for i, exp := range expectedDNSList {
+		if dnsList[i] != exp {
+			t.Fatalf("Expected DNS IP: %s, got %s", exp, dnsList[i])
+		}
+	}
+
+	expectedDNSSearchDomains := []string{"domain1", "domain2"}
+	if dnsSearchDomains == nil || len(dnsSearchDomains) != len(expectedDNSSearchDomains) {
+		t.Fatalf("Unexpected DNS Search Domains: %+v", dnsSearchDomains)
 	} else {
 		t.Logf("Expected DNS Search Domains List: %+v", dnsSearchDomains)
 	}
+	for i, exp := range expectedDNSSearchDomains {
+		if dnsSearchDomains[i] != exp {
+			t.Fatalf("Expected DNS Search domain: %s, got %s", exp, dnsSearchDomains[i])
+		}
+	}
 
 	// Request specific address
-	addr2, _, _, _, err := d.RequestAddress(poolID2, net.ParseIP("172.20.1.45"), nil)
+	addr2, _, err := d.RequestAddress(poolID2, net.ParseIP("172.20.1.45"), nil)
 	if err != nil {
 		t.Fatal(err)
 	}

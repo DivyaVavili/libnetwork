@@ -63,7 +63,7 @@ func (a *allocator) ReleasePool(poolID string) error {
 
 // RequestAddress returns an address from the specified pool ID.
 // Always allocate the 0.0.0.0/32 ip if no preferred address was specified
-func (a *allocator) RequestAddress(poolID string, prefAddress net.IP, opts map[string]string) (*net.IPNet, map[string]string, []string, []string, error) {
+func (a *allocator) RequestAddress(poolID string, prefAddress net.IP, opts map[string]string) (*net.IPNet, map[string]string, error) {
 	log.Debugf("RequestAddress(%s, %v, %v) %s", poolID, prefAddress, opts, opts["RequestAddressType"])
 	_, ipNet, err := net.ParseCIDR(poolID)
 

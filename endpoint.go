@@ -918,8 +918,10 @@ func (ep *endpoint) assignAddressVersion(ipVer int, ipam ipamapi.Ipam) error {
 		if progAdd != nil && !d.Pool.Contains(progAdd) {
 			continue
 		}
-		addr, _, dnsServerList, dnsSearchList, err := ipam.RequestAddress(d.PoolID, progAdd, ep.ipamOptions)
+		addr, ipamData, err := ipam.RequestAddress(d.PoolID, progAdd, ep.ipamOptions)
 		if err == nil {
+			dnsServerList := strings.Split(ipamData["DNSServers"], " ")
+			dnsSearchList := strings.Split(ipamData["DNSSearchDomains"], " ")
 			ep.Lock()
 			*address = addr
 			*dnsServers = dnsServerList

@@ -74,10 +74,8 @@ type RequestAddressRequest struct {
 // RequestAddressResponse represents the expected data in the response message to a ``request address`` request
 type RequestAddressResponse struct {
 	Response
-	Address          string // in CIDR format
-	Data             map[string]string
-	DNSServers       []string
-	DNSSearchDomains []string
+	Address string // in CIDR format
+	Data    map[string]string
 }
 
 // ReleaseAddressRequest represents the expected data in a ``release address`` request message
