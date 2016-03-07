@@ -42,6 +42,8 @@ type Endpoint interface {
 
 	// Delete and detaches this endpoint from the network.
 	Delete(force bool) error
+
+	MarshalEpIface() []byte
 }
 
 // EndpointOption is an option setter function type used to pass various options to Network
@@ -90,6 +92,16 @@ func (ep *endpoint) MarshalJSON() ([]byte, error) {
 	epMap["disableResolution"] = ep.disableResolution
 	epMap["myAliases"] = ep.myAliases
 	return json.Marshal(epMap)
+}
+
+func (ep *endpoint) MarshalEpIface() []byte {
+	ep.Lock()
+	defer ep.Unlock()
+
+	/*	epMap := make(map[string]interface{})
+		epMap["ep_iface"] = ep.iface.MarshalJSON()*/
+	res, _ := ep.iface.MarshalJSON()
+	return res
 }
 
 func (ep *endpoint) UnmarshalJSON(b []byte) (err error) {
@@ -402,9 +414,10 @@ func (ep *endpoint) sbJoin(sbox Sandbox, options ...EndpointOption) error {
 
 	sb.config.dnsList = append(sb.config.dnsList, ep.iface.dnsServers...)
 	sb.config.dnsSearchList = append(sb.config.dnsSearchList, ep.iface.dnsSearchDomains...)
+	/*log.Errorf("DNS information: Servers: %+v, Search domains: %+v", sb.config.dnsList, sb.config.dnsSearchList)
 	if err = sb.setupResolutionFiles(); err != nil {
 		log.Errorf("Error in setting up resolution files: err %+v", err)
-	}
+	}*/
 
 	network.Lock()
 	nid := network.id
@@ -552,6 +565,10 @@ func (ep *endpoint) sbLeave(sbox Sandbox, force bool, options ...EndpointOption)
 	if err != nil {
 		return fmt.Errorf("failed to get network from store during leave: %v", err)
 	}
+	/*
+		if err = sb.setupResolutionFiles(); err != nil {
+			log.Errorf("Error in setting up resolution files: err %+v", err)
+		}*/
 
 	ep, err = n.getEndpointFromStore(ep.ID())
 	if err != nil {
@@ -908,12 +925,16 @@ func (ep *endpoint) assignAddressVersion(ipVer int, ipam ipamapi.Ipam) error {
 		if progAdd != nil && !d.Pool.Contains(progAdd) {
 			continue
 		}
-		addr, dnsServerList, dnsSearchList, _, err := ipam.RequestAddress(d.PoolID, progAdd, ep.ipamOptions)
+		addr, ipamData, err := ipam.RequestAddress(d.PoolID, progAdd, ep.ipamOptions)
 		if err == nil {
 			ep.Lock()
 			*address = addr
-			*dnsServers = dnsServerList
-			*dnsSearchDomains = dnsSearchList
+			if len(ipamData["DNSServers"]) > 0 {
+				*dnsServers = strings.Split(ipamData["DNSServers"], " ")
+			}
+			if len(ipamData["DNSSearchDomains"]) > 0 {
+				*dnsSearchDomains = strings.Split(ipamData["DNSSearchDomains"], " ")
+			}
 			*poolID = d.PoolID
 			ep.Unlock()
 			return nil

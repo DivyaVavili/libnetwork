@@ -2,7 +2,11 @@
 *.o
 *.a
 *.so
+cscope*
 bin/
+
+*.diff
+*.log
 
 # Folders
 integration-tmp/

@@ -1919,12 +1919,16 @@ func TestResolvConf(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
+	content, err := ioutil.ReadFile(resolvConfPath)
+	t.Logf("After sb1 NewSandbox. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
 
 	err = ep.Join(sb1)
 	runtime.LockOSThread()
 	if err != nil {
 		t.Fatal(err)
 	}
+	content, err = ioutil.ReadFile(resolvConfPath)
+	t.Logf("After sb1 Join to ep. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
 
 	finfo, err := os.Stat(resolvConfPath)
 	if err != nil {
@@ -1933,13 +1937,13 @@ func TestResolvConf(t *testing.T) {
 
 	fmode := (os.FileMode)(0644)
 	if finfo.Mode() != fmode {
-		t.Fatalf("Expected file mode %s, got %s", fmode.String(), finfo.Mode().String())
+		t.Fatalf("Expected file mode %s, ep.iface: %s\n got %s", fmode.String(), ep.MarshalEpIface(), finfo.Mode().String())
 	}
 
-	content, err := ioutil.ReadFile(resolvConfPath)
+	/*content, err = ioutil.ReadFile(resolvConfPath)
 	if err != nil {
 		t.Fatal(err)
-	}
+	}*/
 
 	if !bytes.Equal(content, expectedResolvConf1) {
 		fmt.Printf("\n%v\n%v\n", expectedResolvConf1, content)
@@ -1951,10 +1955,14 @@ func TestResolvConf(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	content, err = ioutil.ReadFile(resolvConfPath)
+	t.Logf("After sb1 Leave from ep. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
 
 	if err := ioutil.WriteFile("/etc/resolv.conf", tmpResolvConf2, 0644); err != nil {
 		t.Fatal(err)
 	}
+	content, err = ioutil.ReadFile(resolvConfPath)
+	t.Logf("After tmpResolvConf2 write to resolv.conf. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
 
 	sb2, err := controller.NewSandbox(containerID+"_2", libnetwork.OptionResolvConfPath(resolvConfPath))
 	if err != nil {
@@ -1965,18 +1973,22 @@ func TestResolvConf(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
+	content, err = ioutil.ReadFile(resolvConfPath)
+	t.Logf("After sb2 NewSandbox. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
 
 	err = ep.Join(sb2)
 	runtime.LockOSThread()
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	content, err = ioutil.ReadFile(resolvConfPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	t.Logf("After sb2 Join to ep. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
+	/*
+		content, err = ioutil.ReadFile(resolvConfPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+	*/
 	if !bytes.Equal(content, expectedResolvConf1) {
 		t.Fatalf("Expected:\n%s\nGot:\n%s", string(expectedResolvConf1), string(content))
 	}
@@ -1984,24 +1996,30 @@ func TestResolvConf(t *testing.T) {
 	if err := ioutil.WriteFile(resolvConfPath, tmpResolvConf3, 0644); err != nil {
 		t.Fatal(err)
 	}
+	content, err = ioutil.ReadFile(resolvConfPath)
+	t.Logf("After tmpResolvConf3 write to resolv.conf. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
 
 	err = ep.Leave(sb2)
 	runtime.LockOSThread()
 	if err != nil {
 		t.Fatal(err)
 	}
+	content, err = ioutil.ReadFile(resolvConfPath)
+	t.Logf("After sb2 Leave from ep. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
 
 	err = ep.Join(sb2)
 	runtime.LockOSThread()
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	content, err = ioutil.ReadFile(resolvConfPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	t.Logf("After sb2 Join to ep. ep.iface: %s\n Got:\n%s", ep.MarshalEpIface(), string(content))
+	/*
+		content, err = ioutil.ReadFile(resolvConfPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+	*/
 	if !bytes.Equal(content, tmpResolvConf3) {
 		t.Fatalf("Expected:\n%s\nGot:\n%s", string(tmpResolvConf3), string(content))
 	}

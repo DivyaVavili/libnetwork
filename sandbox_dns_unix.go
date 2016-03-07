@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	//    "runtime/debug"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libnetwork/etchosts"
@@ -47,6 +48,7 @@ func (sb *sandbox) startResolver() {
 }
 
 func (sb *sandbox) setupResolutionFiles() error {
+	//    debug.PrintStack()
 	if err := sb.buildHostsFile(); err != nil {
 		return err
 	}
@@ -164,6 +166,7 @@ func (sb *sandbox) setupDNS() error {
 	}
 
 	if len(sb.config.dnsList) > 0 || len(sb.config.dnsSearchList) > 0 || len(sb.config.dnsOptionsList) > 0 {
+		log.Errorf("In setupDNS: dnsList len: %d, %+v", len(sb.config.dnsList), sb.config.dnsList)
 		var (
 			err            error
 			dnsList        = resolvconf.GetNameservers(currRC.Content, netutils.IP)
@@ -208,6 +211,7 @@ func (sb *sandbox) updateDNS(ipv6Enabled bool) error {
 		hashFile = sb.config.resolvConfHashFile
 	)
 
+	//    log.Errorf("In updateDNS: dnsList len: %d, %+v", len(sb.config.dnsList), sb.config.dnsList)
 	// This is for the host mode networking
 	if sb.config.originResolvConfPath != "" {
 		return nil
@@ -273,6 +277,7 @@ func (sb *sandbox) rebuildDNS() error {
 		return err
 	}
 
+	//    log.Errorf("In rebuildDNS: dnsList len: %d, %+v", len(sb.config.dnsList), sb.config.dnsList)
 	// localhost entries have already been filtered out from the list
 	// retain only the v4 servers in sb for forwarding the DNS queries
 	sb.extDNS = resolvconf.GetNameservers(currRC.Content, netutils.IPv4)

@@ -222,7 +222,7 @@ if [ -z "$SUITES" ]; then
 	# old kernel and limited docker environment.
 	suites="dnet simple_consul multi_consul multi_zk multi_etcd"
     else
-	suites="dnet simple_consul multi_consul multi_zk multi_etcd  bridge overlay_consul overlay_consul_host overlay_zk overlay_etcd"
+	suites="dnet simple_consul multi_consul multi_zk multi_etcd overlay_consul overlay_consul_host overlay_zk overlay_etcd"
     fi
 else
     suites="$SUITES"

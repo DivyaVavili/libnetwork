@@ -13,7 +13,7 @@ all: ${build_image}.created build check integration-tests clean
 all-local: build-local check-local integration-tests-local clean
 
 ${build_image}.created:
-	docker build -f Dockerfile.build -t ${build_image} .
+#	docker build -f Dockerfile.build -t ${build_image} .
 	touch ${build_image}.created
 
 build: ${build_image}.created
