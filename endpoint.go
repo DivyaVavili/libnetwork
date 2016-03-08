@@ -412,12 +412,14 @@ func (ep *endpoint) sbJoin(sbox Sandbox, options ...EndpointOption) error {
 		}
 	}()
 
-	sb.config.dnsList = append(sb.config.dnsList, ep.iface.dnsServers...)
-	sb.config.dnsSearchList = append(sb.config.dnsSearchList, ep.iface.dnsSearchDomains...)
-	/*log.Errorf("DNS information: Servers: %+v, Search domains: %+v", sb.config.dnsList, sb.config.dnsSearchList)
-	if err = sb.setupResolutionFiles(); err != nil {
-		log.Errorf("Error in setting up resolution files: err %+v", err)
-	}*/
+	if len(ep.iface.dnsServers) > 0 || len(ep.iface.dnsSearchDomains) > 0 {
+		sb.config.dnsList = appendUnique(sb.config.dnsList, ep.iface.dnsServers)
+		sb.config.dnsSearchList = appendUnique(sb.config.dnsSearchList, ep.iface.dnsSearchDomains)
+		log.Errorf("DNS information: Servers: %+v, Search domains: %+v", sb.config.dnsList, sb.config.dnsSearchList)
+		if err = sb.setupResolutionFiles(); err != nil {
+			log.Errorf("Error in setting up resolution files: err %+v", err)
+		}
+	}
 
 	network.Lock()
 	nid := network.id
@@ -485,6 +487,18 @@ func (ep *endpoint) sbJoin(sbox Sandbox, options ...EndpointOption) error {
 		return sb.setupDefaultGW(ep)
 	}
 	return nil
+}
+
+func appendUnique(list1, list2 []string) []string {
+	encountered := map[string]bool{}
+	var result []string
+	for _, el := range append(list1, list2...) {
+		if !encountered[el] {
+			encountered[el] = true
+			result = append(result, el)
+		}
+	}
+	return result
 }
 
 func (ep *endpoint) rename(name string) error {
